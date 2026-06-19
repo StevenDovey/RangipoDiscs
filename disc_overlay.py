@@ -7,13 +7,13 @@ from scipy.ndimage import binary_opening, binary_closing, label
 
 UPLOADS = "images"
 REF_FILE = "23717.tif"
-TREE = "7308"
 THRESH = [10, 20, 30, 40, 50]
 COL = {10: "red", 20: "orange", 30: "yellow", 40: "lime", 50: "cyan"}
 
 man = pd.read_csv("disc_manifest.csv", dtype={"file": str})
 marks = pd.read_csv("disc_marks.csv")
-df = man.merge(marks, on="file").query("tree == @TREE").sort_values("height_m")
+df = man.merge(marks, on="file")
+df = df[df["file"].apply(lambda f: os.path.exists(os.path.join(UPLOADS, f)))].sort_values(["tree", "height_m"])
 
 def load(f): return np.array(Image.open(os.path.join(UPLOADS, f)).convert("RGB")).astype(np.float32)
 
@@ -49,9 +49,9 @@ for _, row in df.iterrows():
     ax.plot(px, py, "w+", ms=10, mew=2)
     rr = 1.15 * Rr
     ax.set_xlim(px - rr, px + rr); ax.set_ylim(py + rr, py - rr)
-    ax.set_title(f"{TREE}  {row.height_m} m  {row.file}  bad={row.bad}")
+    ax.set_title(f"{row.tree}  {row.height_m} m  {row.file}  flip={row.flip} bad={row.bad}")
     h = [plt.Line2D([], [], color=COL[T], lw=2 if T == 10 else 1, label=f"T{T}") for T in THRESH]
     ax.legend(handles=h, fontsize=7, loc="upper right")
     ax.set_xticks([]); ax.set_yticks([])
-    fig.tight_layout(); fig.savefig(f"charts/overlay_{TREE}_{row.height_m}_{row.file}.png", dpi=200); plt.close(fig)
+    fig.tight_layout(); fig.savefig(f"charts/overlay_{row.tree}_{row.height_m}_{row.file}.png", dpi=200); plt.close(fig)
     del arr, dist, interior, xx, yy, seed; gc.collect()
