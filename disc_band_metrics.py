@@ -1,11 +1,11 @@
-#18.06.26 NZST
+#19.06.26 NZST
 import numpy as np, pandas as pd, os
 from PIL import Image
 from scipy.ndimage import binary_opening, binary_closing, label
 
-UPLOADS = "/mnt/user-data/uploads"
-MANIFEST = "/mnt/user-data/outputs/disc_manifest.csv"
-MARKS = UPLOADS + "/disc_marks.csv"
+UPLOADS = "images"
+MANIFEST = "disc_manifest.csv"
+MARKS = "disc_marks.csv"
 MM_PER_PX = 0.25                       # 1 mm = 4.0 px on the FULLER rule
 THRESHOLDS = list(range(10, 101, 10))
 REF_FILE = "23717.tif"
@@ -62,9 +62,9 @@ for _, row in df.iterrows():
 
 pd.DataFrame(t10, columns=["tree", "height_m", "file", "bad", "dist_pith_mm", "dist_edge_mm",
     "arc_deg", "arc_len_mm", "max_thick_mm", "area_px", "area_mm2", "area_frac"]
-    ).to_csv("/mnt/user-data/outputs/disc_threshold10_metrics.csv", index=False)
+    ).to_csv("disc_threshold10_metrics.csv", index=False)
 pd.DataFrame(area, columns=["tree", "height_m", "file", "bad", "threshold", "area_px", "area_mm2", "area_frac"]
-    ).to_csv("/mnt/user-data/outputs/disc_area_by_threshold.csv", index=False)
+    ).to_csv("disc_area_by_threshold.csv", index=False)
 print("THRESHOLD 10, full geometry:")
 print(pd.DataFrame(t10, columns=["tree","height_m","file","bad","dist_pith_mm","dist_edge_mm","arc_deg","arc_len_mm","max_thick_mm","area_px","area_mm2","area_frac"]).to_string(index=False))
 print("\nAREA by threshold (px):")
