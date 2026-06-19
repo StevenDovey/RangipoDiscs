@@ -22,10 +22,10 @@ def geom(arr, px, py):
     Rr = (wood.sum() / np.pi) ** 0.5
     H, W = arr.shape[:2]; yy, xx = np.mgrid[0:H, 0:W]
     d = np.sqrt((yy - py) ** 2 + (xx - px) ** 2)
-    return Rr, wood & (d < 0.95 * Rr), xx, yy
+    return Rr, wood & (d < 0.95 * Rr), xx, yy, wood
 
 ref = load(REF_FILE); r = marks.loc[marks.file == REF_FILE].iloc[0]
-Rr0, i0, x0, _ = geom(ref, r.pith_x, r.pith_y)
+Rr0, i0, x0, _, _ = geom(ref, r.pith_x, r.pith_y)
 S0 = ref.max(2) - ref.min(2); L0 = ref.mean(2); seed0 = i0 & (x0 > r.pith_x + 0.08 * Rr0)
 sc = S0 - 0.6 * L0; sc[ref[:, :, 0] < ref[:, :, 1]] = -999
 REF = np.median(ref[seed0 & (sc > np.percentile(sc[seed0], 99))], 0)
@@ -33,7 +33,7 @@ REF = np.median(ref[seed0 & (sc > np.percentile(sc[seed0], 99))], 0)
 t10, area = [], []
 for _, row in df.iterrows():
     arr = load(row.file); px, py = row.pith_x, row.pith_y
-    Rr, interior, xx, yy = geom(arr, px, py)
+    Rr, interior, xx, yy, wood = geom(arr, px, py)
     seed = interior & (xx > px + 0.08 * Rr)
     dist = np.sqrt(((arr - REF) ** 2).sum(2))
     for T in THRESHOLDS:
@@ -42,7 +42,8 @@ for _, row in df.iterrows():
         if len(sub) == 0:
             area.append([row.tree, row.height_m, row.file, row.bad, T, 0, 0.0, 0.0])
             if T == 10: t10.append([row.tree, row.height_m, row.file, row.bad,
-                                    np.nan, np.nan, np.nan, np.nan, np.nan, 0, 0.0, 0.0])
+                                    np.nan, np.nan, np.nan, np.nan, np.nan, 0, 0.0, 0.0,
+                                    np.nan, np.nan, np.nan])
             continue
         sel = binary_closing(lab == np.bincount(sub).argmax(), iterations=3) & interior
         apx = int(sel.sum()); frac = apx / interior.sum()
@@ -55,17 +56,23 @@ for _, row in df.iterrows():
             dth = np.percentile(thr, 98) - np.percentile(thr, 2)
             bins = np.linspace(thr.min(), thr.max(), 31); bi = np.clip(np.digitize(thr, bins) - 1, 0, 29)
             thick = max((rr[bi == b].max() - rr[bi == b].min()) for b in range(30) if (bi == b).any())
+            wy, wx = np.where(wood); wr = np.hypot(wx - px, wy - py)
+            wedge = np.abs(np.angle(np.exp(1j * (np.arctan2(wy - py, wx - px) - thc)))) < np.radians(15)
+            edge_b = np.percentile(wr[wedge], 98)
             t10.append([row.tree, row.height_m, row.file, row.bad,
                         round(inner * MM_PER_PX, 1), round((Rr - outer) * MM_PER_PX, 1),
                         round(np.degrees(dth), 1), round(dth * rr.mean() * MM_PER_PX, 1),
-                        round(thick * MM_PER_PX, 1), apx, round(apx * MM_PER_PX ** 2, 1), round(frac, 4)])
+                        round(thick * MM_PER_PX, 1), apx, round(apx * MM_PER_PX ** 2, 1), round(frac, 4),
+                        round(Rr * MM_PER_PX, 1), round(edge_b * MM_PER_PX, 1),
+                        round((edge_b - outer) * MM_PER_PX, 1)])
 
 pd.DataFrame(t10, columns=["tree", "height_m", "file", "bad", "dist_pith_mm", "dist_edge_mm",
-    "arc_deg", "arc_len_mm", "max_thick_mm", "area_px", "area_mm2", "area_frac"]
+    "arc_deg", "arc_len_mm", "max_thick_mm", "area_px", "area_mm2", "area_frac",
+    "r_area_mm", "r_bearing_mm", "dist_edge_bearing_mm"]
     ).to_csv("disc_threshold10_metrics.csv", index=False)
 pd.DataFrame(area, columns=["tree", "height_m", "file", "bad", "threshold", "area_px", "area_mm2", "area_frac"]
     ).to_csv("disc_area_by_threshold.csv", index=False)
 print("THRESHOLD 10, full geometry:")
-print(pd.DataFrame(t10, columns=["tree","height_m","file","bad","dist_pith_mm","dist_edge_mm","arc_deg","arc_len_mm","max_thick_mm","area_px","area_mm2","area_frac"]).to_string(index=False))
+print(pd.DataFrame(t10, columns=["tree","height_m","file","bad","dist_pith_mm","dist_edge_mm","arc_deg","arc_len_mm","max_thick_mm","area_px","area_mm2","area_frac","r_area_mm","r_bearing_mm","dist_edge_bearing_mm"]).to_string(index=False))
 print("\nAREA by threshold (px):")
 print(pd.DataFrame(area, columns=["tree","height_m","file","bad","threshold","area_px","area_mm2","area_frac"]).pivot_table(index="height_m", columns="threshold", values="area_px").to_string())
