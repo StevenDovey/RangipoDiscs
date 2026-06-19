@@ -7,6 +7,7 @@ from scipy.ndimage import binary_opening, binary_closing, label
 
 UPLOADS = "images"
 REF_FILE = "23717.tif"
+MM_PER_PX = 0.25
 THRESH = [10, 20, 30, 40, 50]
 COL = {10: "red", 20: "orange", 30: "yellow", 40: "lime", 50: "cyan"}
 
@@ -22,10 +23,10 @@ def geom(arr, px, py):
     Rr = (wood.sum() / np.pi) ** 0.5
     H, W = arr.shape[:2]; yy, xx = np.mgrid[0:H, 0:W]
     d = np.sqrt((yy - py) ** 2 + (xx - px) ** 2)
-    return Rr, wood & (d < 0.95 * Rr), xx, yy
+    return Rr, wood & (d < 0.95 * Rr), xx, yy, wood
 
 ref = load(REF_FILE); r = marks.loc[marks.file == REF_FILE].iloc[0]
-Rr0, i0, x0, _ = geom(ref, r.pith_x, r.pith_y)
+Rr0, i0, x0, _, _ = geom(ref, r.pith_x, r.pith_y)
 S0 = ref.max(2) - ref.min(2); L0 = ref.mean(2); seed0 = i0 & (x0 > r.pith_x + 0.08 * Rr0)
 sc = S0 - 0.6 * L0; sc[ref[:, :, 0] < ref[:, :, 1]] = -999
 REF = np.median(ref[seed0 & (sc > np.percentile(sc[seed0], 99))], 0)
@@ -33,7 +34,7 @@ REF = np.median(ref[seed0 & (sc > np.percentile(sc[seed0], 99))], 0)
 os.makedirs("charts", exist_ok=True)
 for _, row in df.iterrows():
     arr = load(row.file); px, py = row.pith_x, row.pith_y
-    Rr, interior, xx, yy = geom(arr, px, py)
+    Rr, interior, xx, yy, wood = geom(arr, px, py)
     seed = interior & (xx > px + 0.08 * Rr)
     dist = np.sqrt(((arr - REF) ** 2).sum(2))
 
@@ -47,8 +48,12 @@ for _, row in df.iterrows():
         sel = binary_closing(lab == np.bincount(sub).argmax(), iterations=3) & interior
         ax.contour(sel.astype(float), levels=[0.5], colors=[COL[T]], linewidths=2.0 if T == 10 else 1.0)
     ax.plot(px, py, "w+", ms=10, mew=2)
-    rr = 1.15 * Rr
-    ax.set_xlim(px - rr, px + rr); ax.set_ylim(py + rr, py - rr)
+    yw, xw = np.where(wood); x0, x1, y0, y1 = xw.min(), xw.max(), yw.min(), yw.max()
+    m = 0.05 * (x1 - x0)
+    ax.set_xlim(x0 - m, x1 + m); ax.set_ylim(y1 + m, y0 - m)
+    bx, by = x0, y1 + 0.6 * m
+    ax.plot([bx, bx + 100 / MM_PER_PX], [by, by], color="white", lw=3)
+    ax.text(bx, by - 0.15 * m, "100 mm", color="white", fontsize=8, va="bottom")
     ax.set_title(f"{row.tree}  {row.height_m} m  {row.file}  flip={row.flip} bad={row.bad}")
     h = [plt.Line2D([], [], color=COL[T], lw=2 if T == 10 else 1, label=f"T{T}") for T in THRESH]
     ax.legend(handles=h, fontsize=7, loc="upper right")
