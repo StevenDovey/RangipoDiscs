@@ -36,18 +36,13 @@ def render(args):
     row, REF = args
     arr = load(row["file"]); px, py = row["pith_x"], row["pith_y"]
     Rr, interior, xx, yy, wood = geom(arr, px, py)
-    seed = interior & (xx > px + 0.08 * Rr)
     dist = np.sqrt(((arr - REF) ** 2).sum(2))
 
     fig, ax = plt.subplots(figsize=(15 / 2.54, 15 / 2.54))
     ax.imshow(arr.astype(np.uint8))
-    for T in THRESH:
-        m = binary_opening((dist < T) & interior, iterations=2)
-        lab, n = label(m); sub = lab[seed]; sub = sub[sub > 0]
-        if len(sub) == 0:
-            continue
-        sel = binary_closing(lab == np.bincount(sub).argmax(), iterations=3) & interior
-        ax.contour(sel.astype(float), levels=[0.5], colors=[COL[T]], linewidths=2.0 if T == 10 else 1.0)
+    for T in THRESH:                                                # full disc, not one hemisphere
+        m = binary_closing(binary_opening((dist < T) & interior, iterations=2), iterations=3) & interior
+        ax.contour(m.astype(float), levels=[0.5], colors=[COL[T]], linewidths=2.0 if T == 10 else 1.0)
     ax.plot(px, py, "w+", ms=10, mew=2)
     yw, xw = np.where(wood); x0, x1, y0, y1 = xw.min(), xw.max(), yw.min(), yw.max()
     m = 0.05 * (x1 - x0)
