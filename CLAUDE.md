@@ -108,3 +108,4 @@ Do not move to a later priority until Steve signs off the earlier one.
 - Institution is BSI. Scion was merged into BSI; do not reference Scion as a
   separate entity.
 - Answer only what is asked. Be concise. State only what is known.
+- Always reply with a TLDR only. Steve will ask for more if he needs it.
