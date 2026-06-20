@@ -27,4 +27,3 @@ for tree, g in area.groupby("tree"):
     ax.set_yscale("log"); ax.set_xlabel("threshold"); ax.set_ylabel("area px (log)")
     ax.set_title(f"{tree} area vs threshold (vlines = per-disc knee)"); ax.legend(fontsize=6, ncol=2)
     fig.tight_layout(); fig.savefig(f"charts/knee_{tree}.png", dpi=200); plt.close(fig)
-print(kdf.to_string(index=False))

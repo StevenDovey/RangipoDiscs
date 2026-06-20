@@ -90,7 +90,3 @@ if __name__ == "__main__":
         ).to_csv("disc_threshold10_metrics.csv", index=False)
     pd.DataFrame(area, columns=["tree", "height_m", "file", "bad", "threshold", "area_px", "area_mm2", "area_frac"]
         ).to_csv("disc_area_by_threshold.csv", index=False)
-    print("THRESHOLD 10, full geometry:")
-    print(pd.DataFrame(t10, columns=["tree","height_m","file","bad","dist_pith_mm","dist_edge_mm","arc_deg","arc_len_mm","max_thick_mm","area_px","area_mm2","area_frac","r_area_mm","r_bearing_mm","dist_edge_bearing_mm"]).to_string(index=False))
-    print("\nAREA by threshold (px):")
-    print(pd.DataFrame(area, columns=["tree","height_m","file","bad","threshold","area_px","area_mm2","area_frac"]).pivot_table(index="height_m", columns="threshold", values="area_px").to_string())
