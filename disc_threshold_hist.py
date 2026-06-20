@@ -8,7 +8,7 @@ from multiprocessing import Pool
 
 UPLOADS = "images"
 REF_FILE = "23717.tif"
-BINS = np.arange(0, 122, 2)
+BINS = np.arange(0, 200, 2)
 WORKERS = 12
 
 def load(f): return np.array(Image.open(os.path.join(UPLOADS, f)).convert("RGB")).astype(np.float32)
@@ -31,7 +31,7 @@ def build_ref(marks):
     return np.median(ref[seed0 & (sc > np.percentile(sc[seed0], 99))], 0)
 
 def otsu(v):
-    h, e = np.histogram(v, bins=128, range=(0, 128)); p = h / h.sum()
+    h, e = np.histogram(v, bins=221, range=(0, 442)); p = h / h.sum()
     w = np.cumsum(p); mu = np.cumsum(p * ((e[:-1] + e[1:]) / 2)); muT = mu[-1]
     sb = (muT * w - mu) ** 2 / (w * (1 - w) + 1e-12)
     return float((e[:-1] + e[1:])[np.nanargmax(sb)] / 2)
@@ -40,6 +40,8 @@ def disc_hist(args):
     row, REF = args
     arr = load(row["file"]); Rr, interior, xx, yy, wood = geom(arr, row["pith_x"], row["pith_y"])
     v = np.sqrt(((arr - REF) ** 2).sum(2))[interior]
+    if v.size == 0:                                          # degenerate disc: bad pith / geom found no interior
+        return row, np.nan, np.zeros(len(BINS) - 1, int)
     counts, _ = np.histogram(v, bins=BINS)
     return row, otsu(v), counts
 
