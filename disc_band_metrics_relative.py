@@ -40,7 +40,8 @@ def disc_metrics(args):
     row, REF, globalwood = args
     arr = load(row["file"]); px, py = row["pith_x"], row["pith_y"]
     Rr, interior, xx, yy, wood = geom(arr, px, py)
-    REF_disc = REF + (np.median(arr[interior], 0) - globalwood)      # re-centre to this disc's wood
+    loc = np.median(arr[interior], 0) if interior.any() else globalwood
+    REF_disc = REF + (loc - globalwood)                              # re-centre to this disc's wood
     seed = interior & (xx > px + 0.08 * Rr)
     dist = np.sqrt(((arr - REF_disc) ** 2).sum(2))
     area_rows, t10_row = [], None
@@ -96,4 +97,3 @@ if __name__ == "__main__":
         ).to_csv("disc_threshold10_metrics_relative.csv", index=False)
     pd.DataFrame(area, columns=["tree", "height_m", "file", "bad", "threshold", "area_px", "area_mm2", "area_frac"]
         ).to_csv("disc_area_by_threshold_relative.csv", index=False)
-    print(pd.DataFrame(t10, columns=["tree","height_m","file","bad","dist_pith_mm","dist_edge_mm","arc_deg","arc_len_mm","max_thick_mm","area_px","area_mm2","area_frac","r_area_mm","r_bearing_mm","dist_edge_bearing_mm"]).to_string(index=False))
