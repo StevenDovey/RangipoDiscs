@@ -42,7 +42,7 @@ def disc_metrics(args):
     Rr, interior, xx, yy, wood = geom(arr, px, py)
     loc = np.median(arr[interior], 0) if interior.any() else globalwood
     REF_disc = REF + (loc - globalwood)                              # re-centre to this disc's wood
-    seed = interior & (xx > px + 0.08 * Rr)
+    seed = interior                                                 # full disc: stain detected on either hemisphere
     dist = np.sqrt(((arr - REF_disc) ** 2).sum(2))
     area_rows, t10_row = [], None
     for T in THRESHOLDS:
