@@ -53,7 +53,7 @@ def disc_metrics(args):
             if T == 10:
                 t10_row = [row["tree"], row["height_m"], row["file"], row["bad"],
                            np.nan, np.nan, np.nan, np.nan, np.nan, 0, 0.0, 0.0,
-                           np.nan, np.nan, np.nan]
+                           np.nan, np.nan, np.nan, np.nan]
             continue
         sel = binary_closing(lab == np.bincount(sub).argmax(), iterations=3) & interior
         apx = int(sel.sum()); frac = apx / interior.sum()
@@ -74,7 +74,7 @@ def disc_metrics(args):
                        round(np.degrees(dth), 1), round(dth * rr.mean() * MM_PER_PX, 1),
                        round(thick * MM_PER_PX, 1), apx, round(apx * MM_PER_PX ** 2, 1), round(frac, 4),
                        round(Rr * MM_PER_PX, 1), round(edge_b * MM_PER_PX, 1),
-                       round((edge_b - outer) * MM_PER_PX, 1)]
+                       round((edge_b - outer) * MM_PER_PX, 1), round(np.degrees(thc), 1)]
     return area_rows, t10_row
 
 if __name__ == "__main__":
@@ -91,9 +91,14 @@ if __name__ == "__main__":
         area += ar
         if tr is not None: t10.append(tr)
 
-    pd.DataFrame(t10, columns=["tree", "height_m", "file", "bad", "dist_pith_mm", "dist_edge_mm",
+    t10df = pd.DataFrame(t10, columns=["tree", "height_m", "file", "bad", "dist_pith_mm", "dist_edge_mm",
         "arc_deg", "arc_len_mm", "max_thick_mm", "area_px", "area_mm2", "area_frac",
-        "r_area_mm", "r_bearing_mm", "dist_edge_bearing_mm"]
-        ).to_csv("disc_threshold10_metrics_relative.csv", index=False)
+        "r_area_mm", "r_bearing_mm", "dist_edge_bearing_mm", "bearing_deg"])
+    t10df = t10df.merge(marks[["file", "flip", "branch"]], on="file")
+    t10df["bearing_deg"] = (t10df["bearing_deg"] + 180 * t10df["flip"]) % 360
+    bb = (t10df.bad == 1) | (t10df.branch == 1)
+    t10df.loc[bb, ["dist_pith_mm", "dist_edge_mm", "arc_deg", "arc_len_mm", "max_thick_mm", "bearing_deg"]] = np.nan
+    t10df.loc[bb, ["area_px", "area_mm2", "area_frac"]] = 0
+    t10df.to_csv("disc_threshold10_metrics_relative.csv", index=False)
     pd.DataFrame(area, columns=["tree", "height_m", "file", "bad", "threshold", "area_px", "area_mm2", "area_frac"]
         ).to_csv("disc_area_by_threshold_relative.csv", index=False)
