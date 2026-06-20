@@ -35,7 +35,7 @@ def disc_metrics(args):
     row, REF = args
     arr = load(row["file"]); px, py = row["pith_x"], row["pith_y"]
     Rr, interior, xx, yy, wood = geom(arr, px, py)
-    seed = interior & (xx > px + 0.08 * Rr)
+    seed = interior                                                 # full disc: stain detected on either hemisphere
     dist = np.sqrt(((arr - REF) ** 2).sum(2))
     area_rows, t10_row = [], None
     for T in THRESHOLDS:
