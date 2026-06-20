@@ -20,6 +20,13 @@ for tree, g in d.merge(man, on="file").groupby("tree"):
     g = g.sort_values("height_m"); s = g.sev_mm2.values; h = g.height_m.values
     rows.append([tree, g["plot"].iloc[0], g["treeno"].iloc[0], len(g), h.min(), h.max(),
                  round(s.max(), 1), round(float(h[s.argmax()]), 2), round(float(np.trapezoid(s, h)), 1)])
-pd.DataFrame(rows, columns=["tree", "plot", "treeno", "n_disc", "h_min", "h_max",
-    "peak_sev_mm2", "peak_height_m", "stem_integral_mm2m"]
-    ).to_csv("disc_tree_severity.csv", index=False)
+out = pd.DataFrame(rows, columns=["tree", "plot", "treeno", "n_disc", "h_min", "h_max",
+    "peak_sev_mm2", "peak_height_m", "stem_integral_mm2m"])
+
+# confidence from the T5-T15 fine sweep: a runaway slope means the selection is
+# escaping into growth-ring latewood, so the severity is not clean stain.
+stab = pd.read_csv("disc_threshold_stability.csv")[["tree", "rel_span_T5_15"]]
+out = out.merge(stab, on="tree")
+out["confidence"] = np.where(out.peak_sev_mm2 < 5, "none",
+                    np.where(out.rel_span_T5_15 > 3, "low", "high"))
+out.to_csv("disc_tree_severity.csv", index=False)
