@@ -32,9 +32,18 @@ per-channel or differently-scaled tolerances will not match exactly.
 `Cref` is derived once from the most heavily stained reference disc (barcode
 23717): the median RGB of the top 1% most colour-saturated, dark, red pixels
 within the loaded (stained) hemisphere. The same triplet is then applied to
-every disc, so all discs are measured against one fixed standard. To reproduce
-in other software, sample clean resin-stained wood to obtain the equivalent
-`Cref` triplet, or use the pinned values from this project.
+every disc, so all discs are measured against one fixed standard.
+
+**Pinned value for this project:**
+
+    Cref (R, G, B) = (140, 79, 41)
+
+So a pixel is classified as stain at T10 when
+
+    sqrt( (R−140)² + (G−79)² + (B−41)² ) < 10
+
+To reproduce exactly in any software, use this triplet directly. (It was
+computed from disc 23717 with pith at pixel (2744.3, 1840.2), flip = 0.)
 
 ## Why T = 10
 A fine threshold sweep (T5–T15) showed the selected stain area increases
