@@ -110,3 +110,4 @@ Do not move to a later priority until Steve signs off the earlier one.
 - Answer only what is asked. Be concise. State only what is known.
 - Always reply with a TLDR only. Steve will ask for more if he needs it.
 - Always commit changes and deliver via a pull request, not a direct push to main.
+- During development, self-merge each PR right after pushing; Steve just pulls main.
